@@ -2,7 +2,7 @@
  * Created by grant on 16/7/26.
  */
 const electron = require('electron')
-
+const fs = require('fs')
 // Module to control application life.
 const app = electron.app
 // Module to create native browser window.
@@ -13,10 +13,19 @@ const BrowserWindow = electron.BrowserWindow
 let mainWindow
 
 app.on('ready', createWindow)
+let dataDir = app.getPath("appData")+"/com.grant.video.browser";
 
 function createWindow() {
+    if(!fs.existsSync(dataDir)){
+       fs.mkdirSync(dataDir)
+    }
     const FileManager = require("./FileManager")
-    let f = new FileManager()
+
+    let f = new FileManager({
+        dataDir:dataDir,
+        configFile:dataDir+"/video.db.json",
+    })
+
     f.loadLocalFile("/tmp/code.uniq")
     mainWindow = new BrowserWindow({width: 800, height: 600})
     mainWindow.loadURL(`file://${__dirname}/index.html`)

@@ -4,17 +4,25 @@
 let Promise = require("promise")
 let fs = require("fs")
 let lineReader = require('line-reader');
-
+let low = require('lowdb')
 
 let FileManager = function(option) {
-    let defaultOption = {
-        dataDir:"/tmp/video"
-
+    function init() {
+        let defaultOption = {
+            configFile:"/tmp/video.db.json",
+            dataDir:"/tmp/"
+        }
+        let videoDir = option.dataDir+"/video"
+        if(!fs.existsSync(videoDir)){
+            fs.mkdirSync(videoDir)
+        }
     }
+
+    init();
 
     let readFileToTree = function (file) {
         let tree = {}
-        let frist = true;
+        let first = true;
         let check = function (line) {
             let rst = true;
             if(line.indexOf("-----------")==-1){
@@ -25,7 +33,7 @@ let FileManager = function(option) {
         }
         return new Promise(function (resolve,reject) {
             lineReader.eachLine(file,function (line,last,cb) {
-                if(frist){
+                if(first){
                     if(!check(line)){
                         cb(false)
                         reject()
@@ -33,7 +41,7 @@ let FileManager = function(option) {
                         cb(true)
                     }
 
-                    frist = false;
+                    first = false;
                     return;
                 }
                 cb(true)
@@ -54,38 +62,36 @@ let FileManager = function(option) {
             })
         })
     }
-    let updateFileToDB = function () {
-        var sqlite3 = require('sqlite3');
-        let db = new sqlite3.Database('/tmp/chain.sqlite3');
-        console.log(db)
-        db.run("CREATE TABLE IF NOT EXISTS lorem (info TEXT)");
-        var stmt = db.prepare("INSERT INTO lorem VALUES (?)");
-        db.all("SELECT rowid AS id, info FROM lorem", function(err, rows) {});
-        db.close();
+    let updateFileToDB = function (tree) {
+        let db = low(option.configFile, { storage: require('lowdb/lib/file-async') })
+        db.defaults({"createTime":new Date(),updateTime:new Date()}).value()
+        let videos = db.get("videos")
+        if(!db.has("videos").value()){
+            videos = {}
+            db.set("videos",videos).value()
+            videos = db.get("videos")
+        }
 
-
-        // var sqlite3 = require('sqlite3').verbose();
-        // var db = new sqlite3.Database('/tmp/1.db');
-        // ,function() {
-        //     db.run("create table test(name varchar(15))",function(){
-        //         db.run("insert into test values('hello,world')",function(){
-        //             db.all("select * from test",function(err,res){
-        //                 if(!err)
-        //                     console.log(JSON.stringify(res));
-        //                 else
-        //                     console.log(err);
-        //             });
-        //         })
-        //     });
-        // db.run("create table test(name varchar(15))")
+        for(let name in  tree){
+            let ary = tree[name]
+            let code = videos.get(name)
+            if(!videos.has(name).value()){
+                code = {};
+                videos.set(name,code).value();
+                code = videos.get(name)
+            }
+            for(let i =0;i<ary.length;i++){
+                if(!code.has(ary[i]).value()){
+                    code.set(ary[i],{code:ary[i],createTime:new Date(),updateTime:new Date()}).value().code;
+                }
+            }
+        }
+        db.write()
     }
 
     this.loadLocalFile = function (file) {
         readFileToTree(file).then(function (tree) {
-            //console.log(tree);
-            console.log("bg")
-            updateFileToDB()
-            console.log("end")
+            updateFileToDB(tree)
         },function (tree) {
             console.log("fail");
         });
