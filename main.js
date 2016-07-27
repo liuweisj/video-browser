@@ -24,8 +24,15 @@ function createWindow() {
     let f = new FileManager({
         dataDir:dataDir,
         configFile:dataDir+"/video.db.json",
+        magnetSite:"https://www.javbus.com/"
     })
 
+    f.initVideoInfo()
+    const Magnet = require("./MagnetFind")
+    let m = new Magnet({
+        url:"https://www.javbus.com/",
+    })
+    //m.find("MAGURO-008")
     f.loadLocalFile("/tmp/code.uniq")
     mainWindow = new BrowserWindow({width: 800, height: 600})
     mainWindow.loadURL(`file://${__dirname}/index.html`)

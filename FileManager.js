@@ -7,15 +7,19 @@ let lineReader = require('line-reader');
 let low = require('lowdb')
 
 let FileManager = function(option) {
+    let videoDir,conf;
     function init() {
         let defaultOption = {
             configFile:"/tmp/video.db.json",
             dataDir:"/tmp/"
         }
-        let videoDir = option.dataDir+"/video"
+        videoDir = option.dataDir+"/video"
         if(!fs.existsSync(videoDir)){
             fs.mkdirSync(videoDir)
         }
+        conf = low(option.configFile, { storage: require('lowdb/lib/file-async') })
+        conf.autoSave = true;
+        conf.defaults({"createTime":new Date(),updateTime:new Date()}).value()
     }
 
     init();
@@ -63,13 +67,11 @@ let FileManager = function(option) {
         })
     }
     let updateFileToDB = function (tree) {
-        let db = low(option.configFile, { storage: require('lowdb/lib/file-async') })
-        db.defaults({"createTime":new Date(),updateTime:new Date()}).value()
-        let videos = db.get("videos")
-        if(!db.has("videos").value()){
+        let videos = conf.get("videos")
+        if(!conf.has("videos").value()){
             videos = {}
-            db.set("videos",videos).value()
-            videos = db.get("videos")
+            conf.set("videos",videos).value()
+            videos = conf.get("videos")
         }
 
         for(let name in  tree){
@@ -86,7 +88,6 @@ let FileManager = function(option) {
                 }
             }
         }
-        db.write()
     }
 
     this.loadLocalFile = function (file) {
@@ -95,9 +96,35 @@ let FileManager = function(option) {
         },function (tree) {
             console.log("fail");
         });
+    }
+    let downloadImage = function (obj) {
 
     }
+    this.initVideoInfo = function () {
+        if(!conf.has("videos").value())return;
+        const Magnet = require("./MagnetFind")
+        let magnet = new Magnet({
+            url:option.magnetSite,
+        })
 
+        let videos = conf.get("videos").value();
+        let videosDB = conf.get("videos")
+        let sleep = 0;
+        for(let name in videos){
+            let nameList = videos[name]
+            for(let code in nameList){
+                let codeInfo = nameList[code]
+                if(!codeInfo.magnets||codeInfo.magnets.length==0||!codeInfo.cover||!codeInfo.cover.url){
+                    setTimeout(function () {
+                        magnet.find(code).then(function (rst) {
+                            videosDB.set(name+"."+code,rst).value()
+                        })
+                    },sleep+=2000)
+                }
+            }
+        }
+
+    }
 }
 
 module.exports = FileManager
