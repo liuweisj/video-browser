@@ -97,8 +97,18 @@ let FileManager = function(option) {
             console.log("fail");
         });
     }
-    let downloadImage = function (obj) {
+    let downloadImage = function (obj,dir) {
+        if(!obj)return;
+        if(obj.localPath&&fs.existsSync(obj.localPath))return;
+        if(!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+        let request =  require('request');
+        const utils = require('utility');
 
+        request(obj.url).pipe(fs.createWriteStream(dir+"/"+utils.md5(obj.url)+".jpg"));
+
+        return obj;
     }
     this.initVideoInfo = function () {
         if(!conf.has("videos").value())return;
@@ -110,10 +120,22 @@ let FileManager = function(option) {
         let videos = conf.get("videos").value();
         let videosDB = conf.get("videos")
         let sleep = 0;
+        let imgSleep = 0;
         for(let name in videos){
             let nameList = videos[name]
             for(let code in nameList){
                 let codeInfo = nameList[code]
+                setTimeout(function () {
+                    let dir = videoDir+"/"+name+"/"+code
+                    let obj = downloadImage(codeInfo.cover,dir)
+                    let photos = codeInfo.photo
+                    if(photos){
+                        for(let i=0;i<photos.length;i++){
+                            let obj = downloadImage(photos[i],dir);
+                        }
+                    }
+                },imgSleep+=1000)
+
                 if(!codeInfo.magnets||codeInfo.magnets.length==0||!codeInfo.cover||!codeInfo.cover.url){
                     setTimeout(function () {
                         magnet.find(code).then(function (rst) {
