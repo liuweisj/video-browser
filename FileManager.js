@@ -141,19 +141,13 @@ let FileManager = function(option) {
                 setTimeout(function () {
                     let dir = videoDir+"/"+name+"/"+code
                     let obj = downloadImage(codeInfo.cover,dir)
-                    videosDB.set(name+"."+code+".cover",obj).value();
                     let photos = codeInfo.photo
-                    let photoObj = videosDB.get(name+"."+code+".photo")
                     if(photos){
                         for(let i=0;i<photos.length;i++){
                             let obj = downloadImage(photos[i],dir);
-                            //photoObj = photoObj.find({url:"https://pics.javbus.com/thumb/3x9z.jpg'"})
-                            //console.log(photoObj.value())
-                            //if(obj.localPath)photoObj.set("localPath",obj.localPath).value()
-                            //if(obj.status)photoObj.set("status",obj.status).value()
                         }
                     }
-                },imgSleep+=1000)
+                },imgSleep+=1500)
 
                 if(!codeInfo.magnets||codeInfo.magnets.length==0||!codeInfo.cover||!codeInfo.cover.url){
                     setTimeout(function () {
