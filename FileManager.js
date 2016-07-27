@@ -24,6 +24,18 @@ let FileManager = function(option) {
 
     init();
 
+    let mkdirsSync = function(dirname, mode){
+        let path = require("path")
+        if(fs.existsSync(dirname)){
+            return true;
+        }else{
+            if(mkdirsSync(path.dirname(dirname), mode)){
+                fs.mkdirSync(dirname, mode);
+                return true;
+            }
+        }
+    }
+
     let readFileToTree = function (file) {
         let tree = {}
         let first = true;
@@ -101,13 +113,14 @@ let FileManager = function(option) {
         if(!obj)return;
         if(obj.localPath&&fs.existsSync(obj.localPath))return;
         if(!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
+            mkdirsSync(dir);
         }
         let request =  require('request');
-        const utils = require('utility');
-
-        request(obj.url).pipe(fs.createWriteStream(dir+"/"+utils.md5(obj.url)+".jpg"));
-
+        let utils = require('utility');
+        let file = dir+"/"+utils.md5(obj.url)+".jpg";
+        request(obj.url).pipe(fs.createWriteStream(file));
+        obj.localPath = file;
+        obj.status = 1;
         return obj;
     }
     this.initVideoInfo = function () {
@@ -128,10 +141,16 @@ let FileManager = function(option) {
                 setTimeout(function () {
                     let dir = videoDir+"/"+name+"/"+code
                     let obj = downloadImage(codeInfo.cover,dir)
+                    videosDB.set(name+"."+code+".cover",obj).value();
                     let photos = codeInfo.photo
+                    let photoObj = videosDB.get(name+"."+code+".photo")
                     if(photos){
                         for(let i=0;i<photos.length;i++){
                             let obj = downloadImage(photos[i],dir);
+                            //photoObj = photoObj.find({url:"https://pics.javbus.com/thumb/3x9z.jpg'"})
+                            //console.log(photoObj.value())
+                            //if(obj.localPath)photoObj.set("localPath",obj.localPath).value()
+                            //if(obj.status)photoObj.set("status",obj.status).value()
                         }
                     }
                 },imgSleep+=1000)
