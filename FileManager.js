@@ -48,6 +48,7 @@ let FileManager = function(option) {
             return rst
         }
         return new Promise(function (resolve,reject) {
+            console.log("read file to tree....:"+file)
             lineReader.eachLine(file,function (line,last,cb) {
                 if(first){
                     if(!check(line)){
@@ -73,6 +74,7 @@ let FileManager = function(option) {
                         break;
                 }
                 if(last){
+                    console.log("read file success:"+file)
                     resolve(tree)
                 }
             })
@@ -85,7 +87,7 @@ let FileManager = function(option) {
             conf.set("videos",videos).value()
             videos = conf.get("videos")
         }
-
+        console.log("update file to db...")
         for(let name in  tree){
             let ary = tree[name]
             let code = videos.get(name)
@@ -100,14 +102,47 @@ let FileManager = function(option) {
                 }
             }
         }
+        console.log("update file to db complete.")
     }
 
     this.loadLocalFile = function (file) {
+        if(!fs.existsSync(file)){
+            console.log("not find file :"+file)
+            return;
+        }
+        console.log("load local file...:"+file)
         readFileToTree(file).then(function (tree) {
             updateFileToDB(tree)
         },function (tree) {
             console.log("fail");
         });
+    }
+    let compareFileSize = function (s1,s2) {
+        if(!s1)return -1
+        if(!s2)return 1;
+        s1 = s1.toUpperCase();
+        s2 = s2.toUpperCase();
+        let s1_f = 1;
+        let s2_f = 1;
+        let num_1 = s1.split("GB")
+        if(num_1.length==1){
+            num_1 = s1.split("MB")
+            s1_f = s1_f*1024
+        }
+
+        let num_2 = s2.split("GB")
+        if(num_2.length==1){
+            num_2 = s2.split("MB")
+            s2_f = s2_f*1024
+        }
+        if(num_1.length==2&&num_2.length==2){
+            s1 = num_1[0]*s1_f;
+            s2 = num_2[0]*s2_f
+            if(s1>s2)return 1;
+            if(s1<s2)return 2;
+            if(s1==s2)return 0;
+        }
+        return 0;
     }
     let downloadImage = function (obj,dir) {
         if(!obj)return;
@@ -118,6 +153,7 @@ let FileManager = function(option) {
         let request =  require('request');
         let utils = require('utility');
         let file = dir+"/"+utils.md5(obj.url)+".jpg";
+        console.log("download image :"+obj.url)
         request(obj.url).pipe(fs.createWriteStream(file));
         obj.localPath = file;
         obj.status = 1;
@@ -132,12 +168,27 @@ let FileManager = function(option) {
 
         let videos = conf.get("videos").value();
         let videosDB = conf.get("videos")
+        console.log("init video info ....")
         let sleep = 0;
         let imgSleep = 0;
         for(let name in videos){
             let nameList = videos[name]
             for(let code in nameList){
                 let codeInfo = nameList[code]
+                let magnets = codeInfo.magnets
+                // if(magnets){
+                //     magnets.sort(function (o1,o2) {
+                //         console.log(o1.size)
+                //         return compareFileSize(o1.size,o2.size)
+                //     })
+                //     let output = code;
+                //     for(let i=0;i<magnets;i++){
+                //         console.log(magnets[i])
+                //         output+=","+magnets[i]
+                //     }
+                //     //console.log(output)
+                // }
+
                 setTimeout(function () {
                     let dir = videoDir+"/"+name+"/"+code
                     let obj = downloadImage(codeInfo.cover,dir)

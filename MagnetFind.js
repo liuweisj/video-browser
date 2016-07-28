@@ -33,7 +33,7 @@ let MagnetFind = function (option) {
                     let gid = val[1]
                     let uc = 0;
                     http.get(option.url+"/ajax/uncledatoolsbyajax.php?gid="+gid+"&lang=zh&uc="+uc,function (data,status,header) {
-                        let $ = cheerio.load(data);
+                        let $ = cheerio.load(data,{decodeEntities: false});
                         let rst = {code:code,cover:{url:cover,status:0},magnets:[],photo:photo,tags:tags}
                         $("tr").each(function () {
                             if(first){
@@ -49,14 +49,16 @@ let MagnetFind = function (option) {
                             rst.magnets.push({name:name,size:size,shareTime:shareTime,magnet:magnet})
                         })
                         resolve(rst)
-                    },headers)
+                    },headers,'utf8')
                 }
-            },headers)
+            },headers,'utf8')
         })
     }
     this.find = function(code){
+        console.log("find code :"+code +" ..")
         return new Promise(function (resolve,rejcet) {
             getVideoInfo(code).then(function (rst) {
+                console.log("find code :"+code +" success.")
                 resolve(rst)
             })
         })
