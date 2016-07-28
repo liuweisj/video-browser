@@ -41,11 +41,11 @@ let MagnetFind = function (option) {
                                 return;
                             }
                             let _this = $(this);
-                            let td = _this.find("td a")
-                            let name = td.eq(0).html().trim();
-                            let magnet = td.attr("href")
-                            let size = td.eq(1).html().trim()
-                            let shareTime = td.eq(2).html().trim();
+                            let td = _this.find("td")
+                            let name = td.eq(0).find("a").eq(0).html().trim();
+                            let magnet = td.find("a").attr("href")
+                            let size = td.eq(1).find("a").eq(0).html().trim()
+                            let shareTime = td.eq(2).find("a").eq(0).html().trim();
                             rst.magnets.push({name:name,size:size,shareTime:shareTime,magnet:magnet})
                         })
                         resolve(rst)

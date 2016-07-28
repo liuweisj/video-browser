@@ -176,37 +176,35 @@ let FileManager = function(option) {
             for(let code in nameList){
                 let codeInfo = nameList[code]
                 let magnets = codeInfo.magnets
-                // if(magnets){
-                //     magnets.sort(function (o1,o2) {
-                //         console.log(o1.size)
-                //         return compareFileSize(o1.size,o2.size)
-                //     })
-                //     let output = code;
-                //     for(let i=0;i<magnets;i++){
-                //         console.log(magnets[i])
-                //         output+=","+magnets[i]
-                //     }
-                //     //console.log(output)
-                // }
-
-                setTimeout(function () {
-                    let dir = videoDir+"/"+name+"/"+code
-                    let obj = downloadImage(codeInfo.cover,dir)
-                    let photos = codeInfo.photo
-                    if(photos){
-                        for(let i=0;i<photos.length;i++){
-                            let obj = downloadImage(photos[i],dir);
-                        }
+                if(magnets){
+                    magnets.sort(function (o1,o2) {
+                        return compareFileSize(o1.size,o2.size)
+                    })
+                    let output = code;
+                    for(let i=0;i<magnets.length;i++){
+                        output+=","+magnets[i].magnet
                     }
-                },imgSleep+=1500)
-
-                if(!codeInfo.magnets||codeInfo.magnets.length==0||!codeInfo.cover||!codeInfo.cover.url){
-                    setTimeout(function () {
-                        magnet.find(code).then(function (rst) {
-                            videosDB.set(name+"."+code,rst).value()
-                        })
-                    },sleep+=2000)
+                    console.log(output)
                 }
+
+                // setTimeout(function () {
+                //     let dir = videoDir+"/"+name+"/"+code
+                //     let obj = downloadImage(codeInfo.cover,dir)
+                //     let photos = codeInfo.photo
+                //     if(photos){
+                //         for(let i=0;i<photos.length;i++){
+                //             let obj = downloadImage(photos[i],dir);
+                //         }
+                //     }
+                // },imgSleep+=1500)
+                //
+                // if(!codeInfo.magnets||codeInfo.magnets.length==0||!codeInfo.cover||!codeInfo.cover.url){
+                //     setTimeout(function () {
+                //         magnet.find(code).then(function (rst) {
+                //             videosDB.set(name+"."+code,rst).value()
+                //         })
+                //     },sleep+=2000)
+                // }
             }
         }
 
